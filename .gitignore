@@ -221,3 +221,5 @@ transcribed_audio_logs
 
 # Database
 history.db
+
+.DS_Store
