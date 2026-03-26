@@ -24,7 +24,7 @@ from typing import Optional, Dict, Any, List
 
 # --- APP IDENTITY ---
 APP_NAME = "wa-transcriber"
-APP_VERSION = "1.1.0"
+APP_VERSION = "1.2.0"
 DEVELOPER_NAME = "Jean Paul Fernandez"
 DEVELOPER_USERNAME = "jpxoi"
 
