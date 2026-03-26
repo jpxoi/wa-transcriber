@@ -74,11 +74,17 @@ def queue_recent_files(audio_queue: queue.Queue) -> None:
     # Check DB and queue if new
     for _, filepath, filename in audio_files:
         if not db.is_file_processed(filename):
-            print(
-                f"   {Fore.MAGENTA}+ Queuing missed file:{Style.RESET_ALL} {filename}"
-            )
-            audio_queue.put(filepath)
-            count += 1
+            try:
+                audio_queue.put_nowait(filepath)
+                print(
+                    f"   {Fore.MAGENTA}+ Queuing missed file:{Style.RESET_ALL} {filename}"
+                )
+                count += 1
+            except queue.Full:
+                print(
+                    f"   {Fore.YELLOW}⚠ Queue full:{Style.RESET_ALL} Skipping additional backfill files to protect memory."
+                )
+                break
 
     if count == 0:
         print(f"   {Fore.GREEN}✓ All caught up.{Style.RESET_ALL}")
@@ -130,7 +136,7 @@ def run_transcriber() -> None:
     print(f"{Fore.GREEN}✓ System Ready!{Style.RESET_ALL}")
 
     # 4. Initialize Transcription Worker
-    audio_queue: queue.Queue = queue.Queue()
+    audio_queue: queue.Queue = queue.Queue(maxsize=config.MAX_PENDING_FILES)
     worker = TranscriptionWorker(model, audio_queue)  # noqa: F841
 
     # 5. Queue recent files (if enabled)

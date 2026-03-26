@@ -60,6 +60,27 @@ def save_to_log(text: str, source_file: str, duration: str, elapsed: float) -> N
         pass
 
 
+def format_result_duration(result: dict[str, Any]) -> str:
+    """
+    Best-effort duration formatter using transcription metadata.
+
+    This avoids decoding the same audio twice just to estimate duration.
+    """
+    try:
+        segments = result.get("segments")
+        if not segments:
+            return "Unknown duration"
+
+        last_segment = segments[-1]
+        duration_secs = float(last_segment.get("end", 0))
+        if duration_secs <= 0:
+            return "Unknown duration"
+
+        return utils.format_duration(duration_secs)
+    except Exception:
+        return "Unknown duration"
+
+
 class TranscriptionWorker(threading.Thread):
     def __init__(self, model: WhisperModel, audio_queue: queue.Queue) -> None:
         super().__init__()
@@ -91,14 +112,7 @@ class TranscriptionWorker(threading.Thread):
             print(f"{Fore.RED}✗ [TIMEOUT]{Style.RESET_ALL} File not ready: {file_base}")
             return
 
-        try:
-            audio = whisper.load_audio(filename)
-            duration_secs = len(audio) / whisper.audio.SAMPLE_RATE
-
-            duration_fmt = utils.format_duration(duration_secs)
-
-        except Exception:
-            duration_fmt = "Unknown duration"
+        duration_fmt = "Unknown duration"
 
         timestamp = datetime.datetime.now().strftime("%H:%M:%S")
         print(
@@ -129,6 +143,7 @@ class TranscriptionWorker(threading.Thread):
                 filename, fp16=use_fp16, language=config.TRANSCRIPTION_LANGUAGE
             )
             text: str = result["text"].strip()
+            duration_fmt = format_result_duration(result)
 
             elapsed = time.time() - start_time
 

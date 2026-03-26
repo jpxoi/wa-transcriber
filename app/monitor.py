@@ -49,4 +49,9 @@ class InternalAudioHandler(FileSystemEventHandler):
             print(
                 f"\n{Fore.MAGENTA}📥 [NEW]{Style.RESET_ALL} Detected: {os.path.basename(filename)}"
             )
-            self.queue.put(filename)
+            try:
+                self.queue.put_nowait(filename)
+            except queue.Full:
+                print(
+                    f"{Fore.YELLOW}⚠ Queue full:{Style.RESET_ALL} Dropping {os.path.basename(filename)} until pending work clears."
+                )

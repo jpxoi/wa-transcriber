@@ -72,6 +72,7 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     "TRANSCRIPTION_LANGUAGE": None,
     "SCAN_LOOKBACK_ENABLED": True,
     "SCAN_LOOKBACK_HOURS": 1,
+    "MAX_PENDING_FILES": 128,
     "MODEL_CLEANUP_ENABLED": True,
     "MODEL_RETENTION_DAYS": 3,
     "ENABLE_MPS_FP16": False,
@@ -86,6 +87,7 @@ MODEL_SIZE: str = DEFAULT_CONFIG["MODEL_SIZE"]
 TRANSCRIPTION_LANGUAGE: Optional[str] = DEFAULT_CONFIG["TRANSCRIPTION_LANGUAGE"]
 SCAN_LOOKBACK_ENABLED: bool = DEFAULT_CONFIG["SCAN_LOOKBACK_ENABLED"]
 SCAN_LOOKBACK_HOURS: int = DEFAULT_CONFIG["SCAN_LOOKBACK_HOURS"]
+MAX_PENDING_FILES: int = DEFAULT_CONFIG["MAX_PENDING_FILES"]
 MODEL_CLEANUP_ENABLED: bool = DEFAULT_CONFIG["MODEL_CLEANUP_ENABLED"]
 MODEL_RETENTION_DAYS: int = DEFAULT_CONFIG["MODEL_RETENTION_DAYS"]
 ENABLE_MPS_FP16: bool = DEFAULT_CONFIG["ENABLE_MPS_FP16"]
@@ -124,6 +126,7 @@ def show_config() -> None:
     _print_row("Model Size", MODEL_SIZE)
     _print_row("Transcription Language", TRANSCRIPTION_LANGUAGE)
     _print_row("File Ready Timeout", f"{FILE_READY_TIMEOUT}s")
+    _print_row("Max Pending Files", MAX_PENDING_FILES)
 
     # --- Group 2: Features & Cleanup ---
     print(f"\n {Fore.WHITE}{Style.BRIGHT}🧹 Automation & Cleanup{Style.RESET_ALL}")
@@ -173,6 +176,7 @@ def load_configuration() -> bool:
         TRANSCRIPTION_LANGUAGE, \
         SCAN_LOOKBACK_ENABLED, \
         SCAN_LOOKBACK_HOURS, \
+        MAX_PENDING_FILES, \
         MODEL_CLEANUP_ENABLED, \
         MODEL_RETENTION_DAYS, \
         ENABLE_MPS_FP16, \
@@ -198,6 +202,9 @@ def load_configuration() -> bool:
         )
         SCAN_LOOKBACK_HOURS = user_config.get(
             "SCAN_LOOKBACK_HOURS", DEFAULT_CONFIG["SCAN_LOOKBACK_HOURS"]
+        )
+        MAX_PENDING_FILES = user_config.get(
+            "MAX_PENDING_FILES", DEFAULT_CONFIG["MAX_PENDING_FILES"]
         )
         MODEL_CLEANUP_ENABLED = user_config.get(
             "MODEL_CLEANUP_ENABLED", DEFAULT_CONFIG["MODEL_CLEANUP_ENABLED"]

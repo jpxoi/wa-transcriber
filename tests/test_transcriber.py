@@ -80,25 +80,26 @@ def test_worker_initialization(worker, mock_model):
     assert worker.daemon is True
 
 
-@patch("app.transcriber.whisper.load_audio")
 @patch("app.transcriber.utils.format_duration")
 @patch("app.transcriber.save_to_log")
 @patch("app.db.add_processed_file")
 @patch("app.transcriber.pyperclip.copy")
 def test_process_file_success(
-    mock_copy, mock_add_db, mock_save_log, mock_fmt_dur, mock_load_audio, worker
+    mock_copy, mock_add_db, mock_save_log, mock_fmt_dur, worker
 ):
     """Test successful processing of a file."""
     # Setup mocks
-    mock_load_audio.return_value = [0.0] * 16000 * 10  # 10 seconds of dummy audio
     mock_fmt_dur.return_value = "10s"
+    worker.model.transcribe.return_value = {
+        "text": "This is a test transcription.",
+        "segments": [{"end": 10.0}],
+    }
 
     # Ensure file ready check passes immediately
     with patch.object(worker, "wait_for_file_ready", return_value=True):
         worker.process_file("/tmp/test_audio.ogg")
 
     # Check interactions
-    mock_load_audio.assert_called_with("/tmp/test_audio.ogg")
     worker.model.transcribe.assert_called()
     call_args = worker.model.transcribe.call_args
     assert call_args[0][0] == "/tmp/test_audio.ogg"
@@ -116,7 +117,6 @@ def test_process_file_success(
     mock_add_db.assert_called_with("test_audio.ogg", "/tmp/test_audio.ogg")
 
 
-@patch("app.transcriber.whisper.load_audio")
 @patch("app.transcriber.save_to_log")
 @patch("app.db.add_processed_file")
 @patch("app.transcriber.pyperclip.copy")
@@ -124,14 +124,14 @@ def test_process_file_unknown_duration(
     mock_copy,
     mock_add_db,
     mock_save_log,
-    mock_load_audio,
     worker,
     capsys,
 ):
     """Test process_file falls back to 'Unknown duration' and still transcribes."""
-
-    # Force duration calculation to fail
-    mock_load_audio.side_effect = Exception("decode failed")
+    worker.model.transcribe.return_value = {
+        "text": "This is a test transcription.",
+        "segments": [],
+    }
 
     with patch.object(worker, "wait_for_file_ready", return_value=True):
         worker.process_file("/tmp/test_audio.ogg")
@@ -143,12 +143,8 @@ def test_process_file_unknown_duration(
     assert "Unknown duration" in captured.out
 
 
-@patch("app.transcriber.whisper.load_audio")
-def test_process_file_exception(mock_load_audio, worker, capsys):
+def test_process_file_exception(worker, capsys):
     """Test process_file handles transcription exceptions gracefully."""
-
-    # Make duration succeed
-    mock_load_audio.return_value = [0.0] * 16000
 
     # Force transcription to fail
     worker.model.transcribe.side_effect = Exception("Model failure")
@@ -161,7 +157,6 @@ def test_process_file_exception(mock_load_audio, worker, capsys):
     assert "Model failure" in captured.out
 
 
-@patch("app.transcriber.whisper.load_audio")
 @patch("app.transcriber.pyperclip.copy")
 @patch("app.transcriber.save_to_log")
 @patch("app.db.add_processed_file")
@@ -169,14 +164,16 @@ def test_process_file_clipboard_exception(
     mock_add_db,
     mock_save_log,
     mock_copy,
-    mock_load_audio,
     worker,
     capsys,
 ):
     """Test clipboard failure does not break processing."""
 
-    mock_load_audio.return_value = [0.0] * 16000
     mock_copy.side_effect = Exception("Clipboard unavailable")
+    worker.model.transcribe.return_value = {
+        "text": "This is a test transcription.",
+        "segments": [{"end": 1.0}],
+    }
 
     with patch.object(worker, "wait_for_file_ready", return_value=True):
         worker.process_file("/tmp/test_audio.ogg")
@@ -244,11 +241,11 @@ def test_fp16_logic_cuda(worker):
     worker.model.device.type = "cuda"
     with (
         patch.object(worker, "wait_for_file_ready", return_value=True),
-        patch("app.transcriber.whisper.load_audio"),
         patch("app.transcriber.pyperclip.copy"),
         patch("app.transcriber.save_to_log"),
         patch("app.db.add_processed_file"),
     ):
+        worker.model.transcribe.return_value = {"text": "ok", "segments": [{"end": 1.0}]}
         worker.process_file("dummies.mp3")
 
         args = worker.model.transcribe.call_args[1]
@@ -263,11 +260,11 @@ def test_fp16_logic_mps_disabled(worker):
     with (
         patch.object(config, "ENABLE_MPS_FP16", False),
         patch.object(worker, "wait_for_file_ready", return_value=True),
-        patch("app.transcriber.whisper.load_audio"),
         patch("app.transcriber.pyperclip.copy"),
         patch("app.transcriber.save_to_log"),
         patch("app.db.add_processed_file"),
     ):
+        worker.model.transcribe.return_value = {"text": "ok", "segments": [{"end": 1.0}]}
         worker.process_file("dummies.mp3")
 
         args = worker.model.transcribe.call_args[1]
@@ -280,12 +277,25 @@ def test_fp16_logic_mps_enabled(worker):
     with (
         patch.object(config, "ENABLE_MPS_FP16", True),
         patch.object(worker, "wait_for_file_ready", return_value=True),
-        patch("app.transcriber.whisper.load_audio"),
         patch("app.transcriber.pyperclip.copy"),
         patch("app.transcriber.save_to_log"),
         patch("app.db.add_processed_file"),
     ):
+        worker.model.transcribe.return_value = {"text": "ok", "segments": [{"end": 1.0}]}
         worker.process_file("dummies.mp3")
 
         args = worker.model.transcribe.call_args[1]
         assert args.get("fp16") is True
+
+
+def test_format_result_duration_uses_last_segment(mocker):
+    mock_fmt = mocker.patch("app.transcriber.utils.format_duration", return_value="12.5s")
+
+    result = {"segments": [{"end": 3.0}, {"end": 12.5}]}
+
+    assert transcriber.format_result_duration(result) == "12.5s"
+    mock_fmt.assert_called_once_with(12.5)
+
+
+def test_format_result_duration_missing_segments():
+    assert transcriber.format_result_duration({}) == "Unknown duration"

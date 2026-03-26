@@ -93,6 +93,24 @@ def test_queue_recent_files_already_processed(mocker):
     assert q.empty()
 
 
+def test_queue_recent_files_stops_when_queue_full(mocker, capsys):
+    q = queue.Queue(maxsize=1)
+    mock_files = [("root", [], ["file1.opus", "file2.opus"])]
+
+    mocker.patch("app.config.SCAN_LOOKBACK_ENABLED", True)
+    mocker.patch("app.config.WHATSAPP_INTERNAL_PATH", "/mock/path")
+    mocker.patch("os.path.exists", return_value=True)
+    mocker.patch("os.walk", return_value=mock_files)
+    mocker.patch("os.path.getmtime", side_effect=[time.time(), time.time()])
+    mocker.patch("app.db.is_file_processed", return_value=False)
+
+    core.queue_recent_files(q)
+
+    captured = capsys.readouterr()
+    assert "Queue full" in captured.out
+    assert q.qsize() == 1
+
+
 def test_run_transcriber_no_whatsapp_path(mocker, capsys):
     mocker.patch("app.core.utils.print_banner")
     mocker.patch("app.core.db.init_db")

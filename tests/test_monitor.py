@@ -62,3 +62,19 @@ def test_internal_audio_handler_ignore_directories(mocker):
     handler.on_created(event)
 
     assert q.qsize() == 0
+
+
+def test_internal_audio_handler_drops_when_queue_full(mocker, capsys):
+    q = queue.Queue(maxsize=1)
+    q.put("/path/existing.mp3")
+    handler = monitor.InternalAudioHandler(q)
+
+    event = mocker.MagicMock()
+    event.is_directory = False
+    event.src_path = "/path/new_audio.mp3"
+
+    handler.on_created(event)
+
+    captured = capsys.readouterr()
+    assert "Queue full" in captured.out
+    assert q.qsize() == 1
