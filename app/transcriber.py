@@ -17,7 +17,6 @@
 import os
 import time
 import datetime
-import whisper
 import pyperclip
 import queue
 import threading
