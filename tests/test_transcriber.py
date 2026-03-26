@@ -245,7 +245,10 @@ def test_fp16_logic_cuda(worker):
         patch("app.transcriber.save_to_log"),
         patch("app.db.add_processed_file"),
     ):
-        worker.model.transcribe.return_value = {"text": "ok", "segments": [{"end": 1.0}]}
+        worker.model.transcribe.return_value = {
+            "text": "ok",
+            "segments": [{"end": 1.0}],
+        }
         worker.process_file("dummies.mp3")
 
         args = worker.model.transcribe.call_args[1]
@@ -264,7 +267,10 @@ def test_fp16_logic_mps_disabled(worker):
         patch("app.transcriber.save_to_log"),
         patch("app.db.add_processed_file"),
     ):
-        worker.model.transcribe.return_value = {"text": "ok", "segments": [{"end": 1.0}]}
+        worker.model.transcribe.return_value = {
+            "text": "ok",
+            "segments": [{"end": 1.0}],
+        }
         worker.process_file("dummies.mp3")
 
         args = worker.model.transcribe.call_args[1]
@@ -281,7 +287,10 @@ def test_fp16_logic_mps_enabled(worker):
         patch("app.transcriber.save_to_log"),
         patch("app.db.add_processed_file"),
     ):
-        worker.model.transcribe.return_value = {"text": "ok", "segments": [{"end": 1.0}]}
+        worker.model.transcribe.return_value = {
+            "text": "ok",
+            "segments": [{"end": 1.0}],
+        }
         worker.process_file("dummies.mp3")
 
         args = worker.model.transcribe.call_args[1]
@@ -289,7 +298,9 @@ def test_fp16_logic_mps_enabled(worker):
 
 
 def test_format_result_duration_uses_last_segment(mocker):
-    mock_fmt = mocker.patch("app.transcriber.utils.format_duration", return_value="12.5s")
+    mock_fmt = mocker.patch(
+        "app.transcriber.utils.format_duration", return_value="12.5s"
+    )
 
     result = {"segments": [{"end": 3.0}, {"end": 12.5}]}
 
