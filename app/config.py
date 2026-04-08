@@ -50,7 +50,9 @@ def _get_app_version() -> str:
         return version("wa-transcriber")
     except PackageNotFoundError:
         pass
-    parsed = _version_from_pyproject(Path(__file__).resolve().parent.parent / "pyproject.toml")
+    parsed = _version_from_pyproject(
+        Path(__file__).resolve().parent.parent / "pyproject.toml"
+    )
     if parsed:
         return parsed
     return "0.0.0"
