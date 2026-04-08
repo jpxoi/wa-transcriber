@@ -4,7 +4,7 @@ A lightning-fast, privacy-focused tool that automatically transcribes incoming W
 
 **Why?** WhatsApp's native transcription is often unavailable or slow. This tool provides a superior, **100% local** alternative that works instantly the moment a voice note is downloaded, leveraging your hardware (GPU/NPU) for maximum speed.
 
-![CLI view of running wa-transcriber health](/images/health.png)
+![CLI view of running wa-transcriber health](https://raw.githubusercontent.com/jpxoi/wa-transcriber/refs/heads/main/images/health.png)
 
 > [!IMPORTANT]
 > **Desktop Only:** This tool requires the official **WhatsApp Desktop App** (Store Version). It monitors the internal file system for new `.opus` files.
