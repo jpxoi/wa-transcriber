@@ -17,14 +17,48 @@
 import os
 import json
 import platform
+from importlib.metadata import PackageNotFoundError, version
 from app import utils
 from colorama import Style, Fore
 from pathlib import Path
 from typing import Optional, Dict, Any, List
 
+
+def _version_from_pyproject(path: Path) -> Optional[str]:
+    """Read [project].version from pyproject.toml (no extra deps; works on Python 3.10)."""
+    try:
+        text = path.read_text(encoding="utf-8")
+    except OSError:
+        return None
+    in_project = False
+    for line in text.splitlines():
+        stripped = line.strip()
+        if stripped == "[project]":
+            in_project = True
+            continue
+        if stripped.startswith("[") and stripped.endswith("]"):
+            in_project = False
+            continue
+        if in_project and stripped.startswith("version = "):
+            raw = stripped.split("=", 1)[1].strip()
+            return raw.strip().strip('"').strip("'")
+    return None
+
+
+def _get_app_version() -> str:
+    try:
+        return version("wa-transcriber")
+    except PackageNotFoundError:
+        pass
+    parsed = _version_from_pyproject(Path(__file__).resolve().parent.parent / "pyproject.toml")
+    if parsed:
+        return parsed
+    return "0.0.0"
+
+
 # --- APP IDENTITY ---
 APP_NAME = "wa-transcriber"
-APP_VERSION = "1.3.0"
+APP_VERSION = _get_app_version()
 DEVELOPER_NAME = "Jean Paul Fernandez"
 DEVELOPER_USERNAME = "jpxoi"
 
