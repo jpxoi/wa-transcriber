@@ -45,20 +45,45 @@ Ensure you have a modern Python version installed. You can download it from [pyt
 
 ## 🛠️ Installation
 
-### Clone the repository
+### From PyPI (recommended)
+
+Install the latest release with **pip** (use a [venv](https://docs.python.org/3/library/venv.html) if you like):
+
+```bash
+pip install wa-transcriber
+```
+
+Or install as an isolated CLI with **[uv](https://docs.astral.sh/uv/)**:
+
+```bash
+uv tool install wa-transcriber
+```
+
+The package is published on [PyPI](https://pypi.org/project/wa-transcriber/). Dependencies include PyTorch and Whisper, so the first install may take a while and use significant disk space.
+
+### From source
+
+Clone the repository and install from the checkout (for development or unreleased changes). Use a [venv](https://docs.python.org/3/library/venv.html) if you prefer.
 
 ```bash
 git clone https://github.com/jpxoi/wa-transcriber.git
 cd wa-transcriber
-```
-
-### Install the package
-
-This will install the package in your system's Python environment. You can also use a virtual environment if you prefer.
-
-```bash
 pip install .
 ```
+
+For an **editable** install while hacking on the code: `pip install -e .`
+
+If you use **uv** in the repo:
+
+```bash
+git clone https://github.com/jpxoi/wa-transcriber.git
+cd wa-transcriber
+uv sync
+```
+
+Run CLI commands with `uv run wa-transcriber ...` (for example `uv run wa-transcriber health`).
+
+For day-to-day use of a stable build, prefer **From PyPI** above.
 
 ### Run the Health Check (Crucial)
 
