@@ -60,7 +60,7 @@ def queue_recent_files(audio_queue: queue.Queue) -> None:
 
     for root, _, files in os.walk(target_dir):
         for filename in files:
-            if filename.endswith((".opus", ".m4a", ".mp3", ".wav")):
+            if filename.endswith((".opus", ".m4a", ".mp3", ".wav", ".ogg")):
                 filepath = os.path.join(root, filename)
                 try:
                     mtime = os.path.getmtime(filepath)
